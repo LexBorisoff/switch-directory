@@ -5,8 +5,8 @@ import chalk from "npm:chalk@5.3.0";
 const flags = {
   verbose: "-verbose",
   root: ["-root", "-r"],
-  sd: "-sd",
-} as const;
+  to: "-to",
+};
 
 const flagValues = Object.values(flags).flat();
 
@@ -15,7 +15,7 @@ const args: string[] = Deno.args.filter((arg) =>
 );
 
 const verbose: boolean = Deno.args.includes(flags.verbose);
-const sd: boolean = Deno.args.includes(flags.sd);
+const to: boolean = Deno.args.includes(flags.to);
 const root: string =
   Deno.args
     .find((arg) => flags.root.some((rootFlag) => arg.startsWith(rootFlag)))
@@ -102,7 +102,7 @@ async function buildPath(): Promise<string> {
 
 (async function (): Promise<void> {
   function printResult(result: string): void {
-    if (sd) {
+    if (to) {
       console.log(result);
     }
   }

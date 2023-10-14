@@ -5,7 +5,7 @@ SD_EXE="$SCRIPT_DIR/sd.exe"
 
 sd() {
 	$SD_EXE -verbose "$@"
-	local DIRECTORY_PATH=$($SD_EXE -sd "$@")
+	local DIRECTORY_PATH=$($SD_EXE -to "$@")
 	if ! test -z "$DIRECTORY_PATH"; then
 		cd "$DIRECTORY_PATH"
 	fi
