@@ -37,14 +37,13 @@ function isPath(arg: string): boolean {
   );
 }
 
-function getDirectories(lookupDir = "."): Promise<string[]> {
+function getDirectories(lookupDir = Deno.cwd()): Promise<string[]> {
   try {
     Deno.chdir(path.resolve(lookupDir));
-
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       exec("ls -d */", (error, stdout) => {
         if (error != null) {
-          reject(error);
+          resolve([]);
         }
 
         const dirs: string[] = stdout.split("\n").filter((dir) => dir !== "");
@@ -52,22 +51,21 @@ function getDirectories(lookupDir = "."): Promise<string[]> {
       });
     });
   } catch {
-    return Promise.reject(new Error("Something went wrong"));
+    return Promise.resolve([]);
   }
 }
 
-async function buildPath(): Promise<string> {
-  const currentDirectory = root ?? Deno.cwd();
-  let destinationPath = path.resolve(root ?? ".");
-
+async function buildPath(startFromDirectory = Deno.cwd()): Promise<string> {
   function construct(directory: string): string {
     try {
-      Deno.chdir(currentDirectory);
+      Deno.chdir(startFromDirectory);
       return path.resolve(directory);
     } catch {
-      return path.resolve(".");
+      return Deno.cwd();
     }
   }
+
+  let destinationPath = path.resolve(startFromDirectory);
 
   // relative or absolute path
   if (args.length === 1 && isPath(args[0])) {
@@ -76,25 +74,21 @@ async function buildPath(): Promise<string> {
 
   // directory patterns
   if (args.length > 0 && args.every((arg) => !isPath(arg))) {
-    try {
-      for (const arg of args) {
-        const directories = await getDirectories(destinationPath);
-        const found = directories.find(
-          (directory) =>
-            directory.startsWith(arg) ||
-            directory.endsWith(arg) ||
-            directory.includes(arg)
-        );
+    for (const arg of args) {
+      const directories = await getDirectories(destinationPath);
+      const found = directories.find(
+        (directory) =>
+          directory.startsWith(arg) ||
+          directory.endsWith(arg) ||
+          directory.includes(arg)
+      );
 
-        if (found == null) {
-          log(`${chalk.redBright("Could not match")} "${arg}"`);
-          return construct(destinationPath);
-        }
-
-        destinationPath = path.join(destinationPath, found);
+      if (found == null) {
+        log(`${chalk.redBright("Could not match")} "${arg}"`);
+        return construct(destinationPath);
       }
-    } catch {
-      // do nothing
+
+      destinationPath = path.join(destinationPath, found);
     }
   }
   return construct(destinationPath);
