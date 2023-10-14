@@ -4,20 +4,22 @@ import chalk from "npm:chalk@5.3.0";
 
 const flags = {
   verbose: "-verbose",
-  root: "-root",
+  root: ["-root", "-r"],
   sd: "-sd",
 } as const;
 
-const flagValues = Object.values(flags);
+const flagValues = Object.values(flags).flat();
 
-const args = Deno.args.filter((arg) =>
+const args: string[] = Deno.args.filter((arg) =>
   flagValues.every((flag) => !arg.startsWith(flag))
 );
 
-const verbose = Deno.args.includes(flags.verbose);
-const sd = Deno.args.includes(flags.sd);
-const root =
-  Deno.args.find((arg) => arg.startsWith(flags.root))?.split("=")[1] ?? ".";
+const verbose: boolean = Deno.args.includes(flags.verbose);
+const sd: boolean = Deno.args.includes(flags.sd);
+const root: string =
+  Deno.args
+    .find((arg) => flags.root.some((rootFlag) => arg.startsWith(rootFlag)))
+    ?.split("=")[1] ?? ".";
 
 function log(...messages: Parameters<typeof console.log>) {
   if (verbose) {
