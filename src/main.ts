@@ -9,17 +9,19 @@ const flags = {
 };
 
 const flagValues = Object.values(flags).flat();
+const flagArgs = Deno.args
+  .filter((arg) => arg.startsWith("-"))
+  .map((arg) => arg.split("=")[0]);
 
 const args: string[] = Deno.args.filter((arg) =>
-  flagValues.every((flag) => !arg.startsWith(flag))
+  flagArgs.every((flag) => !arg.startsWith(flag))
 );
-
 const verbose: boolean = Deno.args.includes(flags.verbose);
 const to: boolean = Deno.args.includes(flags.to);
 const root: string =
-  Deno.args
-    .find((arg) => flags.root.some((rootFlag) => arg.startsWith(rootFlag)))
-    ?.split("=")[1] ?? ".";
+const root: string[] = Deno.args
+  .filter((arg) => flags.root.some((rootFlag) => arg.startsWith(rootFlag)))
+  .map((arg) => arg.split("=")[1]);
 
 function log(...messages: Parameters<typeof console.log>) {
   if (verbose) {
@@ -101,30 +103,35 @@ async function buildPath(startFromDirectory = Deno.cwd()): Promise<string> {
     }
   }
 
-  if (Array.isArray(root)) {
-    log(chalk.redBright("Only 1 root is allowed"));
+  if (flagArgs.some((arg) => !flagValues.includes(arg))) {
+    const invalidFlags = flagArgs.filter((arg) => !flagValues.includes(arg));
+    log(chalk.redBright("Invalid flags:"), invalidFlags.join(", "));
     printResult("");
     return;
   }
 
   if (args.length > 1) {
-    const manyPathArgs =
-      args.filter((arg) => isPath(arg.toString())).length > 1;
-    const mixedArgs = args.some((arg) => isPath(arg.toString()));
-
-    if (manyPathArgs) {
-      log(chalk.redBright("Only 1 path argument is allowed"));
+    // mixed arguments
+    if (args.some((arg) => isPath(arg.toString()))) {
+      log(chalk.redBright("Path argument cannot be used with other arguments"));
       printResult("");
       return;
     }
 
-    if (mixedArgs) {
-      log(chalk.redBright("Path argument cannot be used with other arguments"));
+    // many path arguments
+    if (args.filter((arg) => isPath(arg.toString())).length > 1) {
+      log(chalk.redBright("Only 1 path argument is allowed"));
       printResult("");
       return;
     }
   }
 
-  const destinationPath = await buildPath();
+  if (root.length > 1) {
+    log(chalk.redBright("Only 1 root is allowed"));
+    printResult("");
+    return;
+  }
+
+  const destinationPath = await buildPath(root.at(0));
   printResult(destinationPath);
 })();
