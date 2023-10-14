@@ -6,6 +6,7 @@ const flags = {
   verbose: "-verbose",
   root: ["-root", "-r"],
   to: "-to",
+  insensitive: "-i",
 };
 
 const flagValues = Object.values(flags).flat();
@@ -18,7 +19,7 @@ const args: string[] = Deno.args.filter((arg) =>
 );
 const verbose: boolean = Deno.args.includes(flags.verbose);
 const to: boolean = Deno.args.includes(flags.to);
-const root: string =
+const insensitive: boolean = Deno.args.includes(flags.insensitive);
 const root: string[] = Deno.args
   .filter((arg) => flags.root.some((rootFlag) => arg.startsWith(rootFlag)))
   .map((arg) => arg.split("=")[1]);
@@ -78,12 +79,16 @@ async function buildPath(startFromDirectory = Deno.cwd()): Promise<string> {
   if (args.length > 0 && args.every((arg) => !isPath(arg))) {
     for (const arg of args) {
       const directories = await getDirectories(destinationPath);
-      const found = directories.find(
-        (directory) =>
-          directory.startsWith(arg) ||
-          directory.endsWith(arg) ||
-          directory.includes(arg)
-      );
+      const found = directories.find((directory) => {
+        const dir = insensitive ? directory.toLowerCase() : directory;
+        const compare = insensitive ? arg.toLowerCase() : arg;
+
+        return (
+          dir.startsWith(compare) ||
+          dir.endsWith(compare) ||
+          dir.includes(compare)
+        );
+      });
 
       if (found == null) {
         log(`${chalk.redBright("Could not match")} "${arg}"`);
