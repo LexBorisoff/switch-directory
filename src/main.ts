@@ -2,6 +2,8 @@ import path from "node:path";
 import { exec } from "node:child_process";
 import chalk from "npm:chalk@5.3.0";
 
+const HOME_ENV = Deno.env.get("HOME") ?? Deno.cwd();
+
 const flags = {
   verbose: "-verbose",
   root: ["-root", "-r"],
@@ -14,15 +16,15 @@ const flagArgs = Deno.args
   .filter((arg) => arg.startsWith("-"))
   .map((arg) => arg.split("=")[0]);
 
-const args: string[] = Deno.args.filter((arg) =>
-  flagArgs.every((flag) => !arg.startsWith(flag))
-);
+const args: string[] = Deno.args
+  .filter((arg) => flagArgs.every((flag) => !arg.startsWith(flag)))
+  .map((arg) => arg.replace("~", HOME_ENV));
 const verbose: boolean = Deno.args.includes(flags.verbose);
 const to: boolean = Deno.args.includes(flags.to);
 const insensitive: boolean = Deno.args.includes(flags.insensitive);
 const root: string[] = Deno.args
   .filter((arg) => flags.root.some((rootFlag) => arg.startsWith(rootFlag)))
-  .map((arg) => arg.split("=")[1]);
+  .map((arg) => arg.split("=")[1].replace("~", HOME_ENV));
 
 function log(...messages: Parameters<typeof console.log>) {
   if (verbose) {
