@@ -81,16 +81,27 @@ async function buildPath(startFromDirectory = Deno.cwd()): Promise<string> {
   if (args.length > 0 && args.every((arg) => !isPath(arg))) {
     for (const arg of args) {
       const directories = await getDirectories(destinationPath);
-      const found = directories.find((directory) => {
-        const dir = insensitive ? directory.toLowerCase() : directory;
-        const compare = insensitive ? arg.toLowerCase() : arg;
 
-        return (
-          dir.startsWith(compare) ||
-          dir.endsWith(compare) ||
-          dir.includes(compare)
-        );
+      let found = directories.find((directory) => {
+        const dir = (insensitive ? directory.toLowerCase() : directory).split(
+          "/"
+        )[0];
+        const compare = insensitive ? arg.toLowerCase() : arg;
+        return dir === compare;
       });
+
+      if (found == null) {
+        found = directories.find((directory) => {
+          const dir = insensitive ? directory.toLowerCase() : directory;
+          const compare = insensitive ? arg.toLowerCase() : arg;
+
+          return (
+            dir.startsWith(compare) ||
+            dir.endsWith(compare) ||
+            dir.includes(compare)
+          );
+        });
+      }
 
       if (found == null) {
         log(`${chalk.redBright("Could not match")} "${arg}"`);
