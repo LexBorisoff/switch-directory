@@ -113,9 +113,10 @@ The way that the program constructs the final path is as follows:
 
 The directory lookup for each argument is done in the following order:
 
-1. a directory ***starts with*** the argument
-2. a directory ***ends with*** the argument
-3. a directory ***includes*** the argument
+1. a directory ***fully matches*** the argument
+2. a directory ***starts with*** the argument
+3. a directory ***ends with*** the argument
+4. a directory ***includes*** the argument
 
 Following our example from above (switching to `~/dev/projects/nodejs/clis`), we could achieve the same result by typing the following:
 
