@@ -46,7 +46,7 @@ function getDirectories(lookupDir = Deno.cwd()): Promise<string[]> {
   try {
     Deno.chdir(path.resolve(lookupDir));
     return new Promise((resolve) => {
-      exec("ls -d */", (error, stdout) => {
+      exec("ls -d */ .*/", (error, stdout) => {
         if (error != null) {
           resolve([]);
         }
